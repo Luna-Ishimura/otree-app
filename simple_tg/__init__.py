@@ -64,6 +64,7 @@ class WaitSend(WaitPage):
 class Sendback(Page):
     form_model = "group"
     form_fields = ["send_back_amount"]
+    template_name = "simple_tg/Sendback.html"
     
     @staticmethod
     def is_displayed(player: Player):
