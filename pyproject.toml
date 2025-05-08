@@ -1,72 +1,9 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "otree_pj_rt"
+name = "otree-template"
 version = "0.1.0"
-description = "This directory contains oTree projects created by Ryu Takahashi"
-readme = "README.rst"
-authors = [
-  {name = "Ryu Takahashi", email = "ryu.takahashi2718@gmail.com"}
-]
-maintainers = [
-  {name = "Ryu Takahashi", email = "ryu.takahashi2718@gmail.com"}
-]
-classifiers = [
-
-]
-license = {text = "MIT license"}
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
 dependencies = [
-  "dotenv>=0.9.9",
-  "gspread>=6.1.4",
-  "oauth2client>=4.1.3",
-  "otree>=5.11.1",
-  "pytest-watch>=4.2.0",
-  "pytest>=8.3.4",
-  "typer",
-  "pytest-django>=4.10.0",
-  "django>=5.1.7",
-  "icecream>=2.1.4",
+    "otree>=5.11.1",
 ]
-
-[project.optional-dependencies]
-dev = [
-    "coverage",  # testing
-    "mypy",  # linting
-    "pytest",  # testing
-    "ruff"  # linting
-]
-
-[project.urls]
-
-bugs = "https://github.com/ryu-thakahashi/otree_pj_rt/issues"
-changelog = "https://github.com/ryu-thakahashi/otree_pj_rt/blob/master/changelog.md"
-homepage = "https://github.com/ryu-thakahashi/otree_pj_rt"
-
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.package-data]
-"*" = ["*.*"]
-
-
-
-
-# Mypy
-# ----
-
-[tool.mypy]
-files = "."
-
-# Use strict defaults
-strict = true
-warn_unreachable = true
-warn_no_return = true
-
-[[tool.mypy.overrides]]
-# Don't require test functions to include types
-module = "tests.*"
-allow_untyped_defs = true
-disable_error_code = "attr-defined"
-

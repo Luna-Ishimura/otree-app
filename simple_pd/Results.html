@@ -1,9 +1,12 @@
-{% block content %}
-<p>You chose:
-    {{ player.decision }}</p>
-<p>Your opponent chose:
-    {{ other_player.decision }}</p>
-<p>Your payoff:
-    {{ player.payoff }}</p>
-{{ next_button }}
-{% endblock %}
+{{ block title }}
+    結果画面
+{{ endblock }}
+
+{{ block content }}
+<p>あなたの選択: {{player.decision}}</p>
+<p>パートナーの選択: {{other_player.decision}}</p>
+<p>あなたの獲得ポイント: {{player.payoff}}</p>
+    {{ next_button }}
+{{ endblock }}
+
+

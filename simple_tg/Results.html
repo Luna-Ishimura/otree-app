@@ -1,0 +1,30 @@
+{{ block title }} Results{{ endblock }}{{ block content }}
+
+<div>
+<h2>取引が終了しました</h2>
+<p>あなたは<strong>{{payoff}}ポイント</strong>を獲得しました</p>
+</div>
+
+<div>
+    <p><strong>取引の流れ</strong></p>
+    <ol>
+        <li>最初に送る人が, <strong>{{send_amount}}</strong> ポイントを送った
+        </li>
+        <li>
+            実験者が,送ったポイントを<strong>{{bc_ratio}}</strong>倍 (つまり,
+            {{multiplyed_send_amount}}ポイント)にした
+        </li>
+        <li>
+            お返しする人が, <strong>{{send_back_amount}}</strong>ポイントを返した
+        </li>
+    </ol>
+    <p>
+        結果, それぞれのポイントは以下のようになりました
+        <ul>
+            <li>最初に送る人のポイント: {{total_send_amount}}</li>
+            <li>お返しする人のポイント: {{total_received_amount}}</li>
+        </ul>
+    </p>
+</div>
+    {{ next_button }}{{ endblock }}
+

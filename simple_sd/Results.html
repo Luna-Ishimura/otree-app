@@ -1,19 +1,19 @@
-{{ block title }}
+{% block title %}
 Results
-{{ endblock }}
+{% endblock %}
 
 {{ block content }}
-<p>あなたの選択は{{ player.decision }}です．</p>
-<p>他の人の選択：</p>
+<p>あなたの選択は{{player/decision }}です.</p>
+<p>他の人の選択:</p>
 <ul>
     {% for p in group_players %}
-    <li>Player
-        {{p.id_in_group}}:
-        {{ p.decision }}</li>
+    <li>Player {{p.id_in_group}}: {{p.decision}}</li>
     {% endfor %}
 </ul>
-<p>協力者の数：{{ num_cooperators }}</p>
-<p>あなたの利得：{{ player.payoff }}</p>
+<p>協力者の数:{{num_cooperators}}</p>
+<p>あなたの利得{{player.payoff}}</p>
 
 {{ next_button }}
-{{ endblock }}
+{% endblock %}
+
+

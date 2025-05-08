@@ -4,8 +4,14 @@ SESSION_CONFIGS = [
     dict(
         name="simple_pd",
         app_sequence=["simple_pd"],
-        num_demo_participants=2,
+        num_demo_participants=2
     ),
+    dict(
+        name="simple_tg",
+        app_sequence={"simple_tg"},
+        num_demo_participants = 2,
+        players_per_group =2,
+        ),
     dict(
         name="simple_sd",
         app_sequence=["simple_sd"],
