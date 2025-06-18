@@ -9,25 +9,32 @@ Your app description
 class C(BaseConstants):
     NAME_IN_URL = 'observe'
     PLAYERS_PER_GROUP = 2
-    NUM_ROUNDS = 5
+    NUM_ROUNDS = 8
     task_texts = [
         "Statistics are like a drunk with a lamppost: used more for support than illumination.",
         "Don't cross your bridges before you get to them.",
         "He that is always shooting must sometimes hit.",
         "An army of sheep led by a lion would defeat an army of lions led by a sheep.",
-        "Full is care, care was to be come miss note."
+        "Full is care, care was to be come miss note.",
+        "Don't count your chickens before they hatch.",
+        "You can’t make an omelette without breaking eggs.",
+        "Even a stopped clock is right twice a day."
         ]
 
 import random
 
 class Subsession(BaseSubsession):
     def creating_session(self):
-        print(f"Round {self.round_number} - copying roles from round 1")
-        if self.round_number ==1 or 'shuffled_texts' not in self.session.vars:
+        if 'shuffled_texts' not in self.session.vars:
             self.session.vars['shuffled_texts'] = random.sample(C.task_texts, len(C.task_texts))
+        if 'condition_list' not in self.session.vars:
+            condition_list = [True]*4 + [False]*4
+            random.shuffle(condition_list)
+            self.session.vars['condition_list'] = condition_list
         
-        round_index = self.round_number-1
-        selected_text = self.session.vars['shuffled_texts'][round_index]
+        round_index = self.round_number - 1
+        selected_text = self.session.vars['shuffled_texts'][round_index]    
+        self.condition = self.session.vars['condition_list'][self.round_number - 1]
         
         if self.round_number == 1:
             players = self.get_players()
@@ -41,11 +48,13 @@ class Subsession(BaseSubsession):
             
                 typist.custom_role='typist'
                 observer.custom_role = 'observer'
+                
+                has_obs = random.choice([True, False])
             
                 typist.has_observer = True
                 typist.is_evaluated = True
 
-                observer.has_observer = False
+                observer.has_observer = True
                 observer.is_evaluated = False
 
                 typist.task_text = selected_text
@@ -65,15 +74,20 @@ class Subsession(BaseSubsession):
             self.set_group_matrix(group_matrix)
         
         else:
+    
             for p in self.get_players():
                 p1 = p.in_round(1)
                 p.custom_role = p1.custom_role
-                p.has_observer = p1.has_observer
+                p.has_observer =  p1.has_observer
                 p.is_evaluated = p1.is_evaluated
-                p.task_text = self.session.vars['shuffled_texts'][self.round_number - 1]
+                p.task_text = selected_text
+                p.condition = self.session.vars['condition_list'][self.round_number - 1]
                 
             for g in self.get_groups():
-                g.has_observer = any(p.custom_role == 'observer' for p in g.get_players())
+                has_obs_in_group = any(
+                    p.custom_role == 'observer' and self.condition for p in g.get_players()
+                )
+                g.has_observer = has_obs_in_group
                 g.save()
 
 
@@ -81,6 +95,7 @@ class Subsession(BaseSubsession):
 class Group(BaseGroup):
     latest_typing_duration = models.FloatField(initial=0)
     has_observer = models.BooleanField(initial=False)
+    is_evaluated = models.BooleanField(initial=True) 
     
     def get_player_by_role(self, role):
         for p in self.get_players():
@@ -94,6 +109,7 @@ class Player(BasePlayer):
     start_time = models.FloatField(initial=0)
     end_time = models.FloatField()
     typing_duration = models.FloatField()
+    condition = models.BooleanField()
     
     star_rating = models.IntegerField(
         choices=[1,2,3,4,5],
@@ -143,7 +159,8 @@ class WaitTypist(WaitPage):
     def is_displayed(self):
         typist = self.group.get_player_by_id(1)
         typed = typist.field_maybe_none('typed_text')
-        return self.get_role() == "observer" and (typed in [None, ""])
+        
+        return self.get_role() == "observer" and  self.field_maybe_none('has_observer') and (typed in [None, ""])
     
     def after_all_players_arrive(self):
         pass  # なくてもOKだけど一応書いておく
@@ -151,13 +168,18 @@ class WaitTypist(WaitPage):
     
 class ObserverPage(Page):
     form_model = 'player'
-    form_fields = [ 'observer_star_rating']
+    form_fields = ['observer_star_rating']
+    
+    def get_form_fields(player):
+        return ['observer_star_rating'] if player.has_observer else []
     
     def is_displayed(self):
         typist = self.group.get_player_by_id(1)
         typed = typist.field_maybe_none('typed_text')
-        return self.get_role() == "observer" and typed not in [None, ""]
-    
+        cond = self.field_maybe_none('condition')
+        if cond is None:
+            cond = False
+        return self.get_role() == "observer" and cond
     
     def vars_for_template(self):
         task_text = C.task_texts[self.round_number - 1]
@@ -185,10 +207,10 @@ class ResultsWaitPage(WaitPage):
             typist = group.get_player_by_role('typist')
             observer = group.get_player_by_role('observer')
             if observer is not None and typist is not None:
-                typist.observer_star_rating = observer.observer_star_rating or 0
+                observer_rating = observer.field_maybe_none('observer_star_rating')
+                typist.observer_star_rating = observer_rating if observer_rating is not None else 0
             else:
             # observerがいない場合の代替処理
-                typist.observer_comment = ""
                 typist.observer_star_rating = 0
 
 
@@ -205,8 +227,7 @@ class Results(Page):
         observer = self.group.get_player_by_role('observer')
         duration = typist.field_maybe_none('typing_duration') or 0
         typed = typist.field_maybe_none('typed_text') or ""
-        
-        has_observer = bool(self.group.has_observer)
+        has_observer = self.field_maybe_none('condition')
         
         context = {
             'task_text': C.task_texts[self.round_number - 1],
@@ -218,9 +239,12 @@ class Results(Page):
         if self.group.has_observer:
             observer = self.group.get_player_by_role('observer')
             context.update({
-            'observer_comment': observer.field_maybe_none('observer_comment') or "",
-            'observer_star_rating': observer.field_maybe_none('observer_star_rating') or '評価なし',
-        })
+                'observer_star_rating': observer.field_maybe_none('observer_star_rating') or '評価なし',
+                })
+        else:
+            context.update({
+                'observer_star_rating': '評価なし',
+                })
             
         return context
 
