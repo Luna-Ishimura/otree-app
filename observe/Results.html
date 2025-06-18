@@ -1,0 +1,15 @@
+{% extends "global/Page.html" %}
+{%block content %}
+{% if has_observer %}
+<h3>観察者からの評価を確認してください</h3>
+    <p>⭐️ 星評価：{{ observer_star_rating }}</p>
+    <p>☺️ リアクション：{{ observer_reaction }}</p>
+    <p>💬 コメント：{{ observer_comment }}</p>
+{% else %}
+    <p><em>次の文章に進んでください。</em></p>
+{% endif %}
+
+<button class = "btn btn-primary">次へ</button>
+{% endblock %}
+
+

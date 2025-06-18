@@ -1,0 +1,35 @@
+{% extends "global/Page.html"%}
+{% block title %}
+    My Page
+{% endblock %}
+
+{% block content %}
+<h3>以下の文章をできるだけ正確にタイピングしてください：</h3>
+<p id = "taskText"><strong>{{task_text}}</strong></p>
+
+<form method = "post">
+    {{formfield player.typed_text}}
+    <input type = "hidden" name = "start_time" id ="start_time_field">
+    <input type = "hidden" name = "end_time" id ="end_time_field">
+
+<br><br>
+<button class = "btn btn-primary">次へ</button>
+</form>
+
+<script>
+    let recorded = false;
+
+    document.querySelector('textarea').addEventListener('focus',function(){
+        if (!recorded){
+            recorded = 'true';
+            const now = performance.now();
+            document.getElementById('start_time_field').value = now/1000;
+        }
+    });
+
+    document.querySelector('form').addEventListener('submit', function(){
+        const now = performance.now();
+        document.getElementById('end_time_field').value = now/1000;
+    })
+</script>
+{% endblock %}

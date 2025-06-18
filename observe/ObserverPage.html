@@ -1,0 +1,23 @@
+{% extends "global/Page.html" %}
+{%block content%}
+<h3>相手が入力した内容を確認し、評価してください（評価内容は相手にも表示されます）</h3>
+<p><strong>課題文：</strong>{{task_text}}</p>
+<p><strong>入力内容：</strong>{{typed_text}}</p>
+<p><strong>タイピング所要時間：</strong> {{ typing_duration }} 秒</p>
+<p><strong>入力速度：</strong> {{ seconds_per_char }} 秒 / 文字</p>
+<hr>
+
+<label for = "star_rating">星評価（1〜5）：</label>
+{{formfield player.observer_star_rating}}
+
+<label for = "reaction">リアクションを選んでください</label>
+{{formfield player.observer_reaction}}
+
+<br><br>
+
+<label for = "comment">コメント（任意）：</label>
+{{formfield player.observer_comment}}
+
+<br><br>
+<button class ="btn btn-primary">次へ</button>
+{%endblock%}
