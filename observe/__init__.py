@@ -9,11 +9,13 @@ Your app description
 class C(BaseConstants):
     NAME_IN_URL = 'observe'
     PLAYERS_PER_GROUP = 2
-    NUM_ROUNDS = 3
+    NUM_ROUNDS = 5
     task_texts = [
         "Statistics are like a drunk with a lamppost: used more for support than illumination.",
         "Don't cross your bridges before you get to them.",
-        "Llanfairpwllgwyngyllgogerychwyrndrobwyllllantysiliogogogoch"
+        "He that is always shooting must sometimes hit.",
+        "An army of sheep led by a lion would defeat an army of lions led by a sheep.",
+        "Full is care, care was to be come miss note."
         ]
 
 import random
@@ -93,17 +95,10 @@ class Player(BasePlayer):
     end_time = models.FloatField()
     typing_duration = models.FloatField()
     
-    comment = models.LongStringField(blank=True)
     star_rating = models.IntegerField(
         choices=[1,2,3,4,5],
         blank=False,
         label="このタイピングの出来を星で評価してください（1〜5）"
-    )
-    reaction = models.StringField(blank = True)
-    observer_comment = models.LongStringField(blank=True)
-    observer_reaction = models.StringField(
-        choices=['👍','🥰','🙂','😔','😢'],
-        blank = True
     )
     observer_star_rating = models.IntegerField(
         choices=[5,4,3,2,1])
@@ -156,7 +151,7 @@ class WaitTypist(WaitPage):
     
 class ObserverPage(Page):
     form_model = 'player'
-    form_fields = ['observer_comment', 'observer_star_rating', 'observer_reaction']
+    form_fields = [ 'observer_star_rating']
     
     def is_displayed(self):
         typist = self.group.get_player_by_id(1)
@@ -189,9 +184,13 @@ class ResultsWaitPage(WaitPage):
         for group in self.subsession.get_groups():
             typist = group.get_player_by_role('typist')
             observer = group.get_player_by_role('observer')
-            typist.observer_comment = observer.observer_comment
-            typist.observer_star_rating = observer.observer_star_rating
-            typist.observer_reaction = observer.observer_reaction
+            if observer is not None and typist is not None:
+                typist.observer_star_rating = observer.observer_star_rating or 0
+            else:
+            # observerがいない場合の代替処理
+                typist.observer_comment = ""
+                typist.observer_star_rating = 0
+
 
 
 
@@ -221,7 +220,6 @@ class Results(Page):
             context.update({
             'observer_comment': observer.field_maybe_none('observer_comment') or "",
             'observer_star_rating': observer.field_maybe_none('observer_star_rating') or '評価なし',
-            'observer_reaction': observer.field_maybe_none('observer_reaction') or "なし",
         })
             
         return context

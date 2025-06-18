@@ -1,10 +1,9 @@
 {% extends "global/Page.html" %}
 {%block content %}
 {% if has_observer %}
-<h3>観察者からの評価を確認してください</h3>
+<h2>あなたのタイピング速度は別プレイヤーに観察されていました。観察者からの評価を確認してください</h2>
+<h3 style="font-size: 1.5em;">5(最高!),4(いいね),3(普通),2(微妙),1(もっと頑張れ)</h3>
     <p>⭐️ 星評価：{{ observer_star_rating }}</p>
-    <p>☺️ リアクション：{{ observer_reaction }}</p>
-    <p>💬 コメント：{{ observer_comment }}</p>
 {% else %}
     <p><em>次の文章に進んでください。</em></p>
 {% endif %}
