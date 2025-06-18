@@ -27,43 +27,41 @@ class Subsession(BaseSubsession):
         round_index = self.round_number-1
         selected_text = self.session.vars['shuffled_texts'][round_index]
         
-        players = self.get_players()
-        random.shuffle(players)
+        if self.round_number == 1:
+            players = self.get_players()
+            random.shuffle(players)
         
-        group_matrix = []
-        i=0
-        while i + 1 < len(players):
-            typist = players[i]
-            observer = players[i+1]
+            group_matrix = []
+            i=0
+            while i + 1 < len(players):
+                typist = players[i]
+                observer = players[i+1]
             
-            typist.custom_role='typist'
-            observer.custom_role = 'observer'
+                typist.custom_role='typist'
+                observer.custom_role = 'observer'
             
-            typist.has_observer = True
-            typist.is_evaluated = True
+                typist.has_observer = True
+                typist.is_evaluated = True
 
-            observer.has_observer = False
-            observer.is_evaluated = False
+                observer.has_observer = False
+                observer.is_evaluated = False
 
-            typist.task_text = selected_text
-            observer.task_text = selected_text
+                typist.task_text = selected_text
+                observer.task_text = selected_text
 
-            group_matrix.append([typist, observer])
-            i += 2
+                group_matrix.append([typist, observer])
+                i += 2
 
-        if i < len(players):
-            solo = players[i]
-            solo.custom_role = 'typist'
-            solo.has_observer = False
-            solo.is_evaluated = False
-            solo.task_text = selected_text
-            group_matrix.append([solo])  
+            if i < len(players):
+                solo = players[i]
+                solo.custom_role = 'typist'
+                solo.has_observer = False
+                solo.is_evaluated = False
+                solo.task_text = selected_text
+                group_matrix.append([solo])  
             
-        self.set_group_matrix(group_matrix)
+            self.set_group_matrix(group_matrix)
         
-        for g in self.get_groups():
-            g.has_observer = any(p.custom_role == 'observer' for p in g.get_players())
-            
         else:
             for p in self.get_players():
                 p1 = p.in_round(1)
@@ -71,14 +69,22 @@ class Subsession(BaseSubsession):
                 p.has_observer = p1.has_observer
                 p.is_evaluated = p1.is_evaluated
                 p.task_text = self.session.vars['shuffled_texts'][self.round_number - 1]
+                
+            for g in self.get_groups():
+                g.has_observer = any(p.custom_role == 'observer' for p in g.get_players())
+                g.save()
 
-        for g in self.get_groups():
-            g.has_observer = any(p.custom_role == 'observer' for p in g.get_players())
 
     
 class Group(BaseGroup):
     latest_typing_duration = models.FloatField(initial=0)
     has_observer = models.BooleanField(initial=False)
+    
+    def get_player_by_role(self, role):
+        for p in self.get_players():
+            if p.get_role() == role:
+                return p
+        return None
 
 class Player(BasePlayer):
     task_text = models.StringField()
@@ -178,7 +184,14 @@ class ObserverPage(Page):
         }
     
 class ResultsWaitPage(WaitPage):
-    pass
+    def after_all_players_arrive(self):
+        # 観察者の評価をタイピストに渡す
+        for group in self.subsession.get_groups():
+            typist = group.get_player_by_role('typist')
+            observer = group.get_player_by_role('observer')
+            typist.observer_comment = observer.observer_comment
+            typist.observer_star_rating = observer.observer_star_rating
+            typist.observer_reaction = observer.observer_reaction
 
 
 
@@ -188,7 +201,9 @@ class Results(Page):
         return player.get_role() == 'typist'
     
     def vars_for_template(self):
-        typist = self.group.get_player_by_id(1)
+        
+        typist = self.group.get_player_by_role('typist')
+        observer = self.group.get_player_by_role('observer')
         duration = typist.field_maybe_none('typing_duration') or 0
         typed = typist.field_maybe_none('typed_text') or ""
         
@@ -202,7 +217,7 @@ class Results(Page):
             }
         
         if self.group.has_observer:
-            observer = self.group.get_player_by_id(2)
+            observer = self.group.get_player_by_role('observer')
             context.update({
             'observer_comment': observer.field_maybe_none('observer_comment') or "",
             'observer_star_rating': observer.field_maybe_none('observer_star_rating') or '評価なし',
