@@ -31,10 +31,13 @@ class Subsession(BaseSubsession):
             condition_list = [True]*4 + [False]*4
             random.shuffle(condition_list)
             self.session.vars['condition_list'] = condition_list
-        
+            
+            print(f"[DEBUG] Condition list: {condition_list}")
+            
         round_index = self.round_number - 1
         selected_text = self.session.vars['shuffled_texts'][round_index]    
-        self.condition = self.session.vars['condition_list'][self.round_number - 1]
+        
+        self.condition = self.session.vars['condition_list'][round_index]
         
         if self.round_number == 1:
             players = self.get_players()
@@ -51,15 +54,19 @@ class Subsession(BaseSubsession):
                 
                 has_obs = random.choice([True, False])
             
-                typist.has_observer = True
-                typist.is_evaluated = True
+                typist.has_observer = has_obs
+                typist.is_evaluated = has_obs
 
-                observer.has_observer = True
-                observer.is_evaluated = False
+                observer.has_observer = has_obs
+                observer.is_evaluated = not has_obs
 
                 typist.task_text = selected_text
                 observer.task_text = selected_text
-
+                
+                typist.condition = self.condition
+                observer.condition = self.condition
+        
+                
                 group_matrix.append([typist, observer])
                 i += 2
 
@@ -69,27 +76,28 @@ class Subsession(BaseSubsession):
                 solo.has_observer = False
                 solo.is_evaluated = False
                 solo.task_text = selected_text
+                solo.condition = self.condition
                 group_matrix.append([solo])  
             
             self.set_group_matrix(group_matrix)
         
         else:
-    
             for p in self.get_players():
                 p1 = p.in_round(1)
                 p.custom_role = p1.custom_role
                 p.has_observer =  p1.has_observer
                 p.is_evaluated = p1.is_evaluated
                 p.task_text = selected_text
-                p.condition = self.session.vars['condition_list'][self.round_number - 1]
+                p.condition = self.session.vars['condition_list'][round_index]
                 
             for g in self.get_groups():
                 has_obs_in_group = any(
-                    p.custom_role == 'observer' and self.condition for p in g.get_players()
+                    p.custom_role == 'observer' and p.condition for p in g.get_players()
                 )
                 g.has_observer = has_obs_in_group
                 g.save()
-
+                print(f"[DEBUG] Group {g.id} has_observer: {g.has_observer}")
+                
 
     
 class Group(BaseGroup):
